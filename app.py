@@ -1,85 +1,60 @@
+import streamlit as st
+
 class ATM:
     def __init__(self):
         self.balance = 5000
-        self.pin = 1234
+        self.pin = "1234"
 
     def check_pin(self, input_pin):
         return input_pin == self.pin
 
     def check_balance(self):
-        print(f"Current balance: {self.balance}")
+        return self.balance
 
-    def deposit(self, input_pin, amount):
-        if not self.check_pin(input_pin):
-            print(" Incorrect PIN.")
-            return
-        if amount <= 0:
-            print(" Deposit amount must be positive.")
-            return
-        self.balance += amount
-        print(f" {amount} deposited. New balance: {self.balance}")
+    def deposit(self, amount):
+        if amount > 0:
+            self.balance += amount
+            return True
+        return False
 
-    def withdraw(self, input_pin, amount):
-        if not self.check_pin(input_pin):
-            print(" Incorrect PIN.")
-            return
-        if amount <= 0:
-            print(" Withdrawal amount must be positive.")
-            return
-        if amount > self.balance:
-            print(" Insufficient balance.")
-            return
-        self.balance -= amount
-        print(f" {amount} withdrawn. Remaining balance: {self.balance}")
+    def withdraw(self, amount):
+        if 0 < amount <= self.balance:
+            self.balance -= amount
+            return True
+        return False
 
-    def exit(self):
-        print(" Exiting ATM. Thank you!")
-        quit()
+# Streamlit UI
+st.title("ATM Simulator")
 
+if "atm" not in st.session_state:
+    st.session_state.atm = ATM()
 
-# Running the ATM Program
-atm = ATM()
+pin_input = st.text_input("Enter your PIN", type="password")
 
-while True:
-    print("\n==== ATM Menu ====")
-    print("1. Check Balance")
-    print("2. Deposit Money")
-    print("3. Withdraw Money")
-    print("4. Exit")
+if st.session_state.atm.check_pin(pin_input):
+    st.success("PIN Verified!")
 
-    try:
-        choice = int(input("Choose an option (1–4): "))
-    except ValueError:
-        print(" Invalid input. Please enter a number.")
-        continue
+    option = st.selectbox("Select an option", ["Check Balance", "Deposit", "Withdraw"])
 
-    if choice == 1:
-        pin = int(input("Enter your PIN: "))
-        if atm.check_pin(pin):
-            atm.check_balance()
-        else:
-            print(" Incorrect PIN.")
+    if option == "Check Balance":
+        st.info(f"Your balance is ₹{st.session_state.atm.check_balance()}")
 
-    elif choice == 2:
-        pin = int(input("Enter your PIN: "))
-        try:
-            amount = float(input("Enter amount to deposit: "))
-        except ValueError:
-            print(" Invalid amount.")
-            continue
-        atm.deposit(pin, amount)
+    elif option == "Deposit":
+        amount = st.number_input("Enter amount to deposit", min_value=0)
+        if st.button("Deposit"):
+            if st.session_state.atm.deposit(amount):
+                st.success("Deposit successful!")
+            else:
+                st.error("Deposit failed.")
 
-    elif choice == 3:
-        pin = int(input("Enter your PIN: "))
-        try:
-            amount = float(input("Enter amount to withdraw: "))
-        except ValueError:
-            print(" Invalid amount.")
-            continue
-        atm.withdraw(pin, amount)
+    elif option == "Withdraw":
+        amount = st.number_input("Enter amount to withdraw", min_value=0)
+        if st.button("Withdraw"):
+            if st.session_state.atm.withdraw(amount):
+                st.success("Withdrawal successful!")
+            else:
+                st.error("Insufficient balance.")
 
-    elif choice == 4:
-        atm.exit()
-
-    else:
-        print(" Invalid option. Try again.")
+else:
+    if pin_input:
+        st.error("Invalid PIN.")
